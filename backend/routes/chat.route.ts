@@ -12,6 +12,7 @@ import {
 	sendMessageSchema,
 	startConversationSchema,
 } from "../validations/chat.validation";
+import { upload } from "../lib/multer";
 
 const router = express.Router();
 
@@ -28,6 +29,13 @@ router.get(
 	validateRequest({ params: conversationIdParamSchema }),
 	getConversationMessages
 );
-router.post("/messages", protectRoute, validateRequest({ body: sendMessageSchema }), sendMessage);
+router.post(
+	"/messages",
+	protectRoute,
+	upload.single("image"),
+	validateRequest({ body: sendMessageSchema }),
+	sendMessage
+);
 
 export default router;
+

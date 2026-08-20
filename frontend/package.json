@@ -10,15 +10,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@livekit/components-core": "^0.12.15",
+    "@livekit/components-react": "^2.9.24",
     "@tanstack/react-query": "^5.55.0",
     "axios": "^1.7.7",
     "date-fns": "^3.6.0",
     "linkedin-clone": "file:..",
+    "livekit-client": "^2.22.0",
     "lucide-react": "^0.439.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
-    "react-router-dom": "^6.26.1"
+    "react-router-dom": "^6.26.1",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

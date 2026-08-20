@@ -16,7 +16,9 @@ import JobsPage from "./pages/JobsPage";
 import JobDetailPage from "./pages/JobDetailPage";
 import MyJobsPage from "./pages/MyJobsPage";
 import MyApplicationsPage from "./pages/MyApplicationsPage";
+import ChatPage from "./pages/ChatPage";
 import { useAuthUser } from "./hooks/useAuth";
+import { SocketContextProvider } from "./context/SocketContext";
 
 function App() {
 	const { data: authUser, isLoading } = useAuthUser();
@@ -24,36 +26,40 @@ function App() {
 	if (isLoading) return null;
 
 	return (
-		<Layout>
-			<Routes>
-				<Route path='/' element={authUser ? <HomePage /> : <Navigate to={"/login"} />} />
-				<Route path='/signup' element={!authUser ? <SignUpPage /> : <Navigate to={"/"} />} />
-				<Route path='/login' element={!authUser ? <LoginPage /> : <Navigate to={"/"} />} />
-				<Route path='/forgot-password' element={!authUser ? <ForgotPasswordPage /> : <Navigate to={"/"} />} />
-				<Route path='/reset-password/:token' element={!authUser ? <ResetPasswordPage /> : <Navigate to={"/"} />} />
-				<Route
-					path='/notifications'
-					element={authUser ? <NotificationsPage /> : <Navigate to={"/login"} />}
-				/>
-				<Route path='/network' element={authUser ? <NetworkPage /> : <Navigate to={"/login"} />} />
-				<Route path='/jobs' element={authUser ? <JobsPage /> : <Navigate to={"/login"} />} />
-				<Route path='/jobs/:id' element={authUser ? <JobDetailPage /> : <Navigate to={"/login"} />} />
-				<Route path='/my-jobs' element={authUser ? <MyJobsPage /> : <Navigate to={"/login"} />} />
-				<Route
-					path='/my-applications'
-					element={authUser ? <MyApplicationsPage /> : <Navigate to={"/login"} />}
-				/>
-				<Route path='/post/:postId' element={authUser ? <PostPage /> : <Navigate to={"/login"} />} />
-				<Route
-					path='/profile/:username'
-					element={authUser ? <ProfilePage /> : <Navigate to={"/login"} />}
-				/>
-				<Route path='/search' element={authUser ? <SearchPage /> : <Navigate to={"/login"} />} />
-			</Routes>
-			<Toaster />
-		</Layout>
+		<SocketContextProvider>
+			<Layout>
+				<Routes>
+					<Route path='/' element={authUser ? <HomePage /> : <Navigate to={"/login"} />} />
+					<Route path='/signup' element={!authUser ? <SignUpPage /> : <Navigate to={"/"} />} />
+					<Route path='/login' element={!authUser ? <LoginPage /> : <Navigate to={"/"} />} />
+					<Route path='/forgot-password' element={!authUser ? <ForgotPasswordPage /> : <Navigate to={"/"} />} />
+					<Route path='/reset-password/:token' element={!authUser ? <ResetPasswordPage /> : <Navigate to={"/"} />} />
+					<Route
+						path='/notifications'
+						element={authUser ? <NotificationsPage /> : <Navigate to={"/login"} />}
+					/>
+					<Route path='/network' element={authUser ? <NetworkPage /> : <Navigate to={"/login"} />} />
+					<Route path='/jobs' element={authUser ? <JobsPage /> : <Navigate to={"/login"} />} />
+					<Route path='/jobs/:id' element={authUser ? <JobDetailPage /> : <Navigate to={"/login"} />} />
+					<Route path='/my-jobs' element={authUser ? <MyJobsPage /> : <Navigate to={"/login"} />} />
+					<Route
+						path='/my-applications'
+						element={authUser ? <MyApplicationsPage /> : <Navigate to={"/login"} />}
+					/>
+					<Route path='/chat' element={authUser ? <ChatPage /> : <Navigate to={"/login"} />} />
+					<Route path='/post/:postId' element={authUser ? <PostPage /> : <Navigate to={"/login"} />} />
+					<Route
+						path='/profile/:username'
+						element={authUser ? <ProfilePage /> : <Navigate to={"/login"} />}
+					/>
+					<Route path='/search' element={authUser ? <SearchPage /> : <Navigate to={"/login"} />} />
+				</Routes>
+				<Toaster />
+			</Layout>
+		</SocketContextProvider>
 	);
 }
 
 export default App;
+
 

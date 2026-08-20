@@ -74,7 +74,16 @@ export interface IPost {
 export interface INotification {
 	_id: string;
 	recipient: string | IUser;
-	type: "like" | "comment" | "connectionAccepted" | "jobApplication" | "applicationStatus";
+	type:
+		| "like"
+		| "comment"
+		| "connectionAccepted"
+		| "jobApplication"
+		| "applicationStatus"
+		| "interviewScheduled"
+		| "interviewStatusChanged"
+		| "interviewFeedback";
+	relatedInterview?: IInterviewSession | any;
 	relatedUser?: IUser;
 	relatedPost?: IPost | any;
 	read: boolean;
@@ -140,6 +149,8 @@ export interface IConversation {
 	lastMessage?: string;
 	lastMessageAt?: string;
 	unreadCounts: { userId: string; count: number }[];
+	myUnreadCount?: number;
+	otherParticipant?: IUser;
 	createdAt: string;
 	updatedAt?: string;
 }
@@ -168,6 +179,7 @@ export interface IInterviewSession {
 	liveKitRoomName?: string;
 	recordingUrl?: string;
 	recruiterFeedback?: { rating?: number; notes?: string };
+	note?: string;
 	createdAt: string;
 	updatedAt?: string;
 }

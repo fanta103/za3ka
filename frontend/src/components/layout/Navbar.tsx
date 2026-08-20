@@ -12,18 +12,28 @@ import {
 	FileText,
 	PlusCircle,
 	CheckSquare,
+	MessageSquare,
 } from "lucide-react";
+
 import { useAuthUser, useLogout } from "../../hooks/useAuth";
 import { useUnreadNotificationsCount } from "../../hooks/useNotifications";
 import { useConnectionRequests } from "../../hooks/useConnections";
 import { useSearch } from "../../hooks/useSearch";
+import { useConversations } from "../../hooks/useChat";
 import PostJobModal from "../jobs/PostJobModal";
 
 const Navbar: React.FC = () => {
 	const { data: authUser } = useAuthUser();
 	const { data: unreadData } = useUnreadNotificationsCount();
 	const { data: connectionRequests } = useConnectionRequests();
+	const { data: conversations = [] } = useConversations();
 	const { mutate: logout } = useLogout();
+
+	const totalUnreadMessages = conversations.reduce(
+		(sum, conv) => sum + (conv.myUnreadCount || 0),
+		0
+	);
+
 
 	const [searchQuery, setSearchQuery] = useState("");
 	const [showSearchDropdown, setShowSearchDropdown] = useState(false);
@@ -231,6 +241,20 @@ const Navbar: React.FC = () => {
 										)}
 									</Link>
 
+									{/* Messaging (Chat) */}
+									<Link
+										to='/chat'
+										className='text-neutral hover:text-primary transition-colors flex flex-col items-center relative'
+									>
+										<MessageSquare size={19} />
+										<span className='text-[11px] hidden md:block'>Messaging</span>
+										{totalUnreadMessages > 0 && (
+											<span className='absolute -top-1 -right-1 md:right-4 bg-primary text-white text-[10px] rounded-full size-3.5 flex items-center justify-center font-bold'>
+												{totalUnreadMessages > 9 ? "9+" : totalUnreadMessages}
+											</span>
+										)}
+									</Link>
+
 									{/* Notifications */}
 									<Link to='/notifications' className='text-neutral hover:text-primary transition-colors flex flex-col items-center relative'>
 										<Bell size={19} />
@@ -241,6 +265,7 @@ const Navbar: React.FC = () => {
 											</span>
 										)}
 									</Link>
+
 
 									{/* Profile */}
 									<Link to={`/profile/${authUser.username}`} className='text-neutral hover:text-primary transition-colors flex flex-col items-center'>

@@ -1,9 +1,11 @@
-import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
 import helmet from "helmet";
+import express from "express";
+
+import { app, server } from "./lib/socket";
 
 import authRoutes from "./routes/auth.route";
 import userRoutes from "./routes/user.route";
@@ -23,9 +25,9 @@ import { setupSwagger } from "./lib/swagger";
 
 dotenv.config();
 
-const app = express();
 const PORT = process.env.PORT || 5000;
 const __dirname = path.resolve();
+
 
 // Security headers with Helmet
 app.use(
@@ -87,9 +89,10 @@ if (process.env.NODE_ENV === "production") {
 // Global error handler middleware (must be registered last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`);
 	connectDB();
 });
 
 export default app;
+
