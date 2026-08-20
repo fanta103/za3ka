@@ -19,6 +19,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useAuthUser } from "../hooks/useAuth";
 import { useJobs, useUpdateJobStatus, useDeleteJob } from "../hooks/useJobs";
 import { useJobApplications } from "../hooks/useApplications";
+import { useMyInterviews } from "../hooks/useInterviews";
 import PostJobModal from "../components/jobs/PostJobModal";
 import ApplicationPipeline from "../components/jobs/ApplicationPipeline";
 import { IJob } from "../types";
@@ -50,7 +51,10 @@ const MyJobsPage: React.FC = () => {
 		activeJob?._id
 	);
 
+	const { data: interviewsData } = useMyInterviews();
+
 	const applications = applicationsData?.pages.flatMap((page) => page.data) ?? [];
+	const interviews = interviewsData?.pages.flatMap((page) => page.data) ?? [];
 
 	const handleToggleStatus = (job: IJob, e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -253,6 +257,7 @@ const MyJobsPage: React.FC = () => {
 								<ApplicationPipeline
 									applications={applications}
 									isLoading={isLoadingApps}
+									interviews={interviews}
 								/>
 							</>
 						)}

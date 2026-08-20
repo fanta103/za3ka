@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { ApplicationStatus, IApplication } from "../../types";
+import { ApplicationStatus, IApplication, IInterviewSession } from "../../types";
 import ApplicantCard from "./ApplicantCard";
 import { Users, Filter, LayoutGrid, List, CheckCircle2 } from "lucide-react";
 
 interface ApplicationPipelineProps {
 	applications: IApplication[];
 	isLoading: boolean;
+	interviews?: IInterviewSession[];
 }
 
 const pipelineStages: { id: ApplicationStatus | "all"; label: string; badgeClass: string }[] = [
@@ -20,6 +21,7 @@ const pipelineStages: { id: ApplicationStatus | "all"; label: string; badgeClass
 const ApplicationPipeline: React.FC<ApplicationPipelineProps> = ({
 	applications,
 	isLoading,
+	interviews = [],
 }) => {
 	const [activeStage, setActiveStage] = useState<ApplicationStatus | "all">("all");
 	const [viewMode, setViewMode] = useState<"tabs" | "kanban">("tabs");
@@ -115,7 +117,7 @@ const ApplicationPipeline: React.FC<ApplicationPipelineProps> = ({
 				<div className='space-y-3'>
 					{filteredApplications.length > 0 ? (
 						filteredApplications.map((app) => (
-							<ApplicantCard key={app._id} application={app} />
+							<ApplicantCard key={app._id} application={app} interviews={interviews} />
 						))
 					) : (
 						<div className='p-8 text-center bg-base-100 rounded-xl border border-base-300 text-xs text-base-content/50'>
@@ -149,7 +151,7 @@ const ApplicationPipeline: React.FC<ApplicationPipelineProps> = ({
 									<div className='space-y-2.5 flex-1'>
 										{stageApps.length > 0 ? (
 											stageApps.map((app) => (
-												<ApplicantCard key={app._id} application={app} />
+												<ApplicantCard key={app._id} application={app} interviews={interviews} />
 											))
 										) : (
 											<div className='h-24 flex items-center justify-center text-[11px] text-base-content/40 border border-dashed border-base-300 rounded-lg'>

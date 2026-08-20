@@ -54,7 +54,7 @@ export const scheduleInterview = async (
 	try {
 		if (!req.user) throw ApiError.unauthorized("Authentication required");
 
-		const { jobId, candidateId, scheduledAt, duration } = req.body;
+		const { jobId, candidateId, scheduledAt, duration, note } = req.body;
 		const recruiterId = req.user._id;
 
 		// Validate the job exists and user is the author
@@ -81,6 +81,7 @@ export const scheduleInterview = async (
 			recruiterId,
 			scheduledAt: new Date(scheduledAt),
 			duration: duration || 30,
+			note: note || undefined,
 			liveKitRoomName,
 			status: "scheduled",
 		});

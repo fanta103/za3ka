@@ -7,6 +7,7 @@ interface ScheduleInterviewModalProps {
 	candidateId: string;
 	candidateName: string;
 	onClose: () => void;
+	onSuccess?: () => void;
 }
 
 const DURATION_OPTIONS = [
@@ -21,6 +22,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
 	candidateId,
 	candidateName,
 	onClose,
+	onSuccess,
 }) => {
 	// Default scheduledAt to 1 day from now at the next round hour
 	const defaultDate = () => {
@@ -40,7 +42,12 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
 		e.preventDefault();
 		schedule(
 			{ jobId, candidateId, scheduledAt, duration, note: note || undefined },
-			{ onSuccess: onClose }
+			{
+				onSuccess: () => {
+					onSuccess?.();
+					onClose();
+				},
+			}
 		);
 	};
 

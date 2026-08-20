@@ -13,6 +13,7 @@ import {
 	PlusCircle,
 	CheckSquare,
 	MessageSquare,
+	Video,
 } from "lucide-react";
 
 import { useAuthUser, useLogout } from "../../hooks/useAuth";
@@ -253,6 +254,15 @@ const Navbar: React.FC = () => {
 												{totalUnreadMessages > 9 ? "9+" : totalUnreadMessages}
 											</span>
 										)}
+									</Link>
+
+									{/* Video Interviews */}
+									<Link
+										to='/interviews'
+										className='text-neutral hover:text-primary transition-colors flex flex-col items-center'
+									>
+										<Video size={19} />
+										<span className='text-[11px] hidden md:block'>Interviews</span>
 									</Link>
 
 									{/* Notifications */}

@@ -8,6 +8,8 @@ import {
 	UserPlus,
 	Briefcase,
 	CheckCircle,
+	Video,
+	Star,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
@@ -43,6 +45,12 @@ const NotificationsPage: React.FC = () => {
 				return <Briefcase className='text-primary' size={16} />;
 			case "applicationStatus":
 				return <CheckCircle className='text-emerald-500' size={16} />;
+			case "interviewScheduled":
+				return <Video className='text-secondary' size={16} />;
+			case "interviewStatusChanged":
+				return <Video className='text-warning' size={16} />;
+			case "interviewFeedback":
+				return <Star className='text-warning' size={16} />;
 			default:
 				return null;
 		}
@@ -91,6 +99,31 @@ const NotificationsPage: React.FC = () => {
 						<strong className='font-bold'>{relatedUser?.name || "the recruiter"}</strong>
 					</span>
 				);
+			case "interviewScheduled":
+				return (
+					<span>
+						<Link to={`/profile/${relatedUser?.username}`} className='font-bold'>
+							{relatedUser?.name || "A recruiter"}
+						</Link>{" "}
+						scheduled a video interview with you
+					</span>
+				);
+			case "interviewStatusChanged":
+				return (
+					<span>
+						Your interview status was updated by{" "}
+						<strong className='font-bold'>{relatedUser?.name || "the other participant"}</strong>
+					</span>
+				);
+			case "interviewFeedback":
+				return (
+					<span>
+						<Link to={`/profile/${relatedUser?.username}`} className='font-bold'>
+							{relatedUser?.name || "The recruiter"}
+						</Link>{" "}
+						submitted feedback on your interview
+					</span>
+				);
 			default:
 				return null;
 		}
@@ -118,6 +151,23 @@ const NotificationsPage: React.FC = () => {
 				>
 					<CheckCircle size={14} className='text-success' />
 					<span>View Application Status</span>
+					<ExternalLink size={12} className='ml-auto' />
+				</Link>
+			);
+		}
+
+		if (
+			notification.type === "interviewScheduled" ||
+			notification.type === "interviewStatusChanged" ||
+			notification.type === "interviewFeedback"
+		) {
+			return (
+				<Link
+					to='/interviews'
+					className='mt-2 p-2 bg-base-200 rounded-md flex items-center space-x-2 hover:bg-base-300 transition-colors text-xs font-semibold text-primary'
+				>
+					<Video size={14} />
+					<span>View Interviews</span>
 					<ExternalLink size={12} className='ml-auto' />
 				</Link>
 			);

@@ -17,6 +17,7 @@ export interface IInterviewSessionDoc extends Document {
 	duration: number; // in minutes
 	liveKitRoomName?: string;
 	recordingUrl?: string;
+	note?: string;
 	recruiterFeedback?: IRecruiterFeedback;
 	createdAt: Date;
 	updatedAt: Date;
@@ -61,6 +62,10 @@ const interviewSessionSchema = new Schema<IInterviewSessionDoc>(
 		},
 		recordingUrl: {
 			type: String,
+		},
+		note: {
+			type: String,
+			maxlength: 500,
 		},
 		recruiterFeedback: {
 			rating: {
