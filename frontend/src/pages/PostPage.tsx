@@ -3,12 +3,12 @@ import { useParams } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Post from "../components/Post";
 import { useAuthUser } from "../hooks/useAuth";
-import { usePostById } from "../hooks/usePosts";
+import { usePost } from "../hooks/usePosts";
 
 const PostPage: React.FC = () => {
 	const { postId } = useParams<{ postId: string }>();
 	const { data: authUser } = useAuthUser();
-	const { data: post, isLoading } = usePostById(postId || "");
+	const { data: post, isLoading } = usePost(postId || "");
 
 	if (isLoading) return <div>Loading post...</div>;
 	if (!post) return <div>Post not found</div>;

@@ -123,6 +123,9 @@ const userSchema = new Schema<IUser>(
 	{ timestamps: true }
 );
 
+// Index for refresh token lookup optimization
+userSchema.index({ refreshToken: 1 });
+
 // Full text search index on name, headline, username
 userSchema.index({ name: "text", headline: "text", username: "text" });
 

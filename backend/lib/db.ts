@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+let mongod: any = null;
+
 export const connectDB = async (): Promise<void> => {
 	try {
 		if (process.env.MONGO_URI) {
@@ -12,7 +14,13 @@ export const connectDB = async (): Promise<void> => {
 		console.warn(`Could not connect to MongoDB URI (${error.message}). Starting in-memory MongoDB...`);
 		try {
 			const { MongoMemoryServer } = await import("mongodb-memory-server");
-			const mongod = await MongoMemoryServer.create();
+			// Configure in-memory MongoDB for faster startup
+			mongod = await MongoMemoryServer.create({
+				instance: {
+					port: 27017,
+					dbName: "nikzebbi_dev",
+				},
+			});
 			const uri = mongod.getUri();
 			await mongoose.connect(uri);
 			console.log(`In-memory MongoDB connected successfully at: ${uri}`);
@@ -21,4 +29,11 @@ export const connectDB = async (): Promise<void> => {
 			process.exit(1);
 		}
 	}
+};
+
+export const disconnectDB = async (): Promise<void> => {
+	if (mongod) {
+		await mongod.stop();
+	}
+	await mongoose.disconnect();
 };

@@ -12,7 +12,7 @@ export const useAuthUser = () => {
 			return res.data;
 		},
 		retry: false,
-		staleTime: 30 * 1000, // 30 seconds, // 5 minutes
+		staleTime: 30 * 1000, // 30 seconds
 	});
 };
 

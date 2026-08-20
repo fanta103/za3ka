@@ -4,6 +4,7 @@ import Post from "../models/post.model";
 import Comment from "../models/comment.model";
 import Like from "../models/like.model";
 import Notification from "../models/notification.model";
+import User from "../models/user.model";
 import { sendCommentNotificationEmail } from "../emails/emailHandlers";
 import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import { ApiError } from "../lib/ApiError";
@@ -18,7 +19,11 @@ export const getFeedPosts = async (req: AuthenticatedRequest, res: Response, nex
 		}
 
 		const currentUserId = req.user._id;
-		const authorIds = [...req.user.connections, currentUserId];
+		
+		// Ensure connections are properly populated
+	 const userWithConnections = await User.findById(currentUserId).select("connections");
+		const connections = userWithConnections?.connections || [];
+		const authorIds = [...connections, currentUserId];
 		const { cursor, limit } = getPaginationParams(req);
 
 		const matchStage: Record<string, any> = {
@@ -30,7 +35,9 @@ export const getFeedPosts = async (req: AuthenticatedRequest, res: Response, nex
 			matchStage.createdAt = { $lt: new Date(cursor) };
 		}
 
-		// Single aggregation pipeline for all feed posts with likes, like status, comments, and author
+		// Keep the feed summary-only. Loading every comment and commenter for every
+		// post made the home page grow proportionally with the entire comment history.
+		// Comments are fetched on demand when a post is opened.
 		const posts = await Post.aggregate([
 			{ $match: matchStage },
 			{ $sort: { createdAt: -1 } },
@@ -64,6 +71,15 @@ export const getFeedPosts = async (req: AuthenticatedRequest, res: Response, nex
 								$expr: { $eq: ["$postId", "$$postId"] },
 							},
 						},
+						{
+							$group: {
+								_id: null,
+								likesCount: { $sum: 1 },
+								isLiked: {
+									$max: { $cond: [{ $eq: ["$userId", currentUserId] }, 1, 0] },
+								},
+							},
+						},
 					],
 					as: "likesData",
 				},
@@ -80,33 +96,8 @@ export const getFeedPosts = async (req: AuthenticatedRequest, res: Response, nex
 								},
 							},
 						},
-						{ $sort: { createdAt: 1 } },
 						{
-							$lookup: {
-								from: "users",
-								localField: "authorId",
-								foreignField: "_id",
-								as: "user",
-								pipeline: [
-									{
-										$project: {
-											name: 1,
-											username: 1,
-											profilePicture: 1,
-											headline: 1,
-										},
-									},
-								],
-							},
-						},
-						{ $unwind: "$user" },
-						{
-							$project: {
-								_id: 1,
-								content: 1,
-								createdAt: 1,
-								user: 1,
-							},
+							$count: "count",
 						},
 					],
 					as: "comments",
@@ -114,15 +105,15 @@ export const getFeedPosts = async (req: AuthenticatedRequest, res: Response, nex
 			},
 			{
 				$addFields: {
-					likesCount: { $size: "$likesData" },
-					isLiked: { $in: [currentUserId, "$likesData.userId"] },
-					likes: "$likesData.userId",
-					commentsCount: { $size: "$comments" },
+					likesCount: { $ifNull: [{ $arrayElemAt: ["$likesData.likesCount", 0] }, 0] },
+					isLiked: { $eq: [{ $ifNull: [{ $arrayElemAt: ["$likesData.isLiked", 0] }, 0] }, 1] },
+					commentsCount: { $ifNull: [{ $arrayElemAt: ["$comments.count", 0] }, 0] },
 				},
 			},
 			{
 				$project: {
 					likesData: 0,
+					comments: 0,
 				},
 			},
 		]);
@@ -389,18 +380,14 @@ export const createComment = async (req: AuthenticatedRequest, res: Response, ne
 
 			await newNotification.save();
 
-			try {
-				const postUrl = (process.env.CLIENT_URL || "http://localhost:5173") + "/post/" + postId;
-				await sendCommentNotificationEmail(
-					post.author.email,
-					post.author.name,
-					req.user.name,
-					postUrl,
-					content
-				);
-			} catch (error) {
-				console.error("Error in sending comment notification email:", error);
-			}
+			const postUrl = (process.env.CLIENT_URL || "http://localhost:5173") + "/post/" + postId;
+			void sendCommentNotificationEmail(
+				post.author.email,
+				post.author.name,
+				req.user.name,
+				postUrl,
+				content
+			).catch((error) => console.error("Error in sending comment notification email:", error));
 		}
 
 		res.status(201).json(formattedComment);

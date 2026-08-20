@@ -24,8 +24,19 @@ export const generateRoomToken = async ({
 	participantIdentity,
 	participantName,
 }: TokenOptions): Promise<string> => {
-	if (!LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
-		throw new Error("LiveKit credentials are not configured. Set LIVEKIT_API_KEY and LIVEKIT_API_SECRET in .env");
+	if (!LIVEKIT_API_KEY || !LIVEKIT_API_SECRET || !LIVEKIT_URL) {
+		throw new Error(
+			"LiveKit is not configured. Set LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET in .env"
+		);
+	}
+
+	try {
+		const url = new URL(LIVEKIT_URL);
+		if (!['ws:', 'wss:', 'http:', 'https:'].includes(url.protocol)) {
+			throw new Error('Unsupported URL protocol');
+		}
+	} catch {
+		throw new Error("LIVEKIT_URL must be a valid ws(s) or http(s) URL");
 	}
 
 	const token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {

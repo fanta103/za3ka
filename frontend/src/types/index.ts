@@ -40,6 +40,7 @@ export interface IUser {
 	connections?: string[] | IUser[];
 	createdAt?: string;
 	updatedAt?: string;
+	isVerified?: boolean;
 }
 
 export interface IComment {
@@ -86,6 +87,7 @@ export interface INotification {
 	relatedInterview?: IInterviewSession | any;
 	relatedUser?: IUser;
 	relatedPost?: IPost | any;
+	relatedJob?: IJob | any;
 	read: boolean;
 	createdAt: string;
 	updatedAt?: string;

@@ -1,5 +1,6 @@
 import { Response, NextFunction } from "express";
 import User from "../models/user.model";
+import ConnectionRequest from "../models/connectionRequest.model";
 import cloudinary from "../lib/cloudinary";
 import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import { ApiError } from "../lib/ApiError";
@@ -21,11 +22,25 @@ export const getSuggestedConnections = async (
 			throw ApiError.notFound("User not found");
 		}
 
-		// Find users who are not current user and not in current user's connections
+		// Find users with pending connection requests
+		const pendingRequests = await ConnectionRequest.find({
+			$or: [
+				{ sender: req.user._id, status: "pending" },
+				{ recipient: req.user._id, status: "pending" },
+			],
+		}).select("sender recipient");
+
+		const pendingUserIds = new Set();
+		pendingRequests.forEach((req) => {
+			pendingUserIds.add(req.sender.toString());
+			pendingUserIds.add(req.recipient.toString());
+		});
+
+		// Find users who are not current user, not in connections, and not in pending requests
 		const suggestedUsers = await User.find({
 			_id: {
 				$ne: req.user._id,
-				$nin: currentUser.connections,
+				$nin: [...currentUser.connections, ...Array.from(pendingUserIds)],
 			},
 		})
 			.select("name username profilePicture headline")
@@ -82,6 +97,14 @@ export const updateProfile = async (
 		for (const field of allowedFields) {
 			if (req.body[field] !== undefined) {
 				updatedData[field] = req.body[field];
+			}
+		}
+
+		// Check if username is being changed and if it's already taken
+		if (updatedData.username && updatedData.username !== req.user.username) {
+			const existingUser = await User.findOne({ username: updatedData.username });
+			if (existingUser) {
+				throw ApiError.conflict("Username already taken", "USERNAME_EXISTS");
 			}
 		}
 

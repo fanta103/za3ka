@@ -41,6 +41,7 @@ const commentSchema = new Schema<ICommentDoc>(
 
 // Compound index for querying comments by post chronologically
 commentSchema.index({ postId: 1, createdAt: -1 });
+commentSchema.index({ postId: 1, deletedAt: 1, createdAt: 1 });
 
 // Soft delete pre-query middleware
 const excludeSoftDeleted = function (this: any, next: (err?: CallbackError) => void) {

@@ -7,7 +7,7 @@ export const searchSchema = z.object({
 		.max(100, "Search query cannot exceed 100 characters"),
 	type: z.enum(["all", "posts", "users", "jobs"]).optional().default("all"),
 	cursor: z.string().optional(),
-	limit: z.string().optional(),
+	limit: z.coerce.number().min(1).max(100).optional(),
 });
 
 export type SearchInput = z.infer<typeof searchSchema>;

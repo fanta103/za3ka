@@ -54,7 +54,9 @@ export const SocketContextProvider: React.FC<{ children: React.ReactNode }> = ({
 			}
 			setOnlineUsers([]);
 		}
-	}, [authUser]);
+	// Query refetches can replace the user object. Reconnecting for that causes
+	// dropped presence updates and unnecessary websocket handshakes.
+	}, [authUser?._id]);
 
 	const isOnline = (userId?: string): boolean => {
 		if (!userId) return false;

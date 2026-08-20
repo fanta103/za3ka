@@ -1,22 +1,32 @@
 import React, { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Loader, MessageCircle, Send, Share2, ThumbsUp, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import PostAction from "./PostAction";
 import { IPost, IComment } from "../types";
 import { useAuthUser } from "../hooks/useAuth";
-import { useDeletePost, useLikePost, useCreateComment } from "../hooks/usePosts";
+import { useDeletePost, useLikePost, useCreateComment, usePostComments } from "../hooks/usePosts";
 
 interface PostProps {
 	post: IPost;
 }
 
 const Post: React.FC<PostProps> = ({ post }) => {
-	const { postId } = useParams<{ postId?: string }>();
 	const { data: authUser } = useAuthUser();
 	const [showComments, setShowComments] = useState(false);
 	const [newComment, setNewComment] = useState("");
-	const [comments, setComments] = useState<IComment[]>(post.comments || []);
+	const [newlyCreatedComments, setNewlyCreatedComments] = useState<IComment[]>([]);
+	const {
+		data: commentsData,
+		isLoading: isLoadingComments,
+		fetchNextPage: fetchMoreComments,
+		hasNextPage: hasMoreComments,
+		isFetchingNextPage: isFetchingMoreComments,
+	} = usePostComments(post._id, showComments);
+	const loadedComments = commentsData?.pages.flatMap((page) => page.data) ?? post.comments ?? [];
+	const comments = [...loadedComments, ...newlyCreatedComments].filter(
+		(comment, index, all) => all.findIndex((item) => item._id === comment._id) === index
+	);
 
 	const isOwner = authUser?._id === post.author._id;
 	const isLiked =
@@ -47,7 +57,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
 		if (newComment.trim() && authUser) {
 			createComment(newComment, {
 				onSuccess: (createdComment: any) => {
-					setComments((prev) => [
+					setNewlyCreatedComments((prev) => [
 						...prev,
 						createdComment || {
 							_id: String(Date.now()),
@@ -103,7 +113,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
 
 					<PostAction
 						icon={<MessageCircle size={18} />}
-						text={`Comment (${comments.length})`}
+					text={`Comment (${post.commentsCount ?? comments.length})`}
 						onClick={() => setShowComments(!showComments)}
 					/>
 					<PostAction icon={<Share2 size={18} />} text='Share' />
@@ -113,6 +123,9 @@ const Post: React.FC<PostProps> = ({ post }) => {
 			{showComments && (
 				<div className='px-4 pb-4'>
 					<div className='mb-4 max-h-60 overflow-y-auto'>
+						{isLoadingComments && (
+							<div className='py-3 text-center text-sm text-info'>Loading comments...</div>
+						)}
 						{comments.map((comment, index) => (
 							<div key={comment._id || index} className='mb-2 bg-base-100 p-2 rounded flex items-start'>
 								<img
@@ -131,6 +144,15 @@ const Post: React.FC<PostProps> = ({ post }) => {
 								</div>
 							</div>
 						))}
+						{hasMoreComments && (
+							<button
+								onClick={() => fetchMoreComments()}
+								disabled={isFetchingMoreComments}
+								className='btn btn-ghost btn-xs mx-auto block'
+							>
+								{isFetchingMoreComments ? "Loading..." : "Load more comments"}
+							</button>
+						)}
 					</div>
 
 					<form onSubmit={handleAddComment} className='flex items-center'>

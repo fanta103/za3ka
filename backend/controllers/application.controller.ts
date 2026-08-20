@@ -106,7 +106,7 @@ export const applyToJob = async (req: AuthenticatedRequest, res: Response, next:
 				recipient: recruiterId,
 				type: "jobApplication",
 				relatedUser: req.user._id,
-				relatedPost: job._id,
+				relatedJob: job._id,
 			});
 
 			const recruiterUser = typeof job.authorId === "object" ? (job.authorId as any) : await User.findById(recruiterId);
@@ -309,6 +309,12 @@ export const updateApplicationStatus = async (
 			throw ApiError.forbidden("Forbidden - Not recruiter for this job");
 		}
 
+		// Validate job status - prevent updates for closed/paused jobs
+		const job = await Job.findById(application.jobId);
+		if (job && job.status !== "open") {
+			throw ApiError.badRequest(`Cannot update application status for ${job.status} jobs`);
+		}
+
 		const oldStatus = application.status;
 		if (status) application.status = status;
 		if (notes !== undefined) application.notes = notes;
@@ -327,7 +333,7 @@ export const updateApplicationStatus = async (
 					recipient: applicantId,
 					type: "applicationStatus",
 					relatedUser: req.user._id,
-					relatedPost: (application.jobId as any)?._id || application.jobId,
+					relatedJob: (application.jobId as any)?._id || application.jobId,
 				});
 
 				const applicantUser = application.applicantId as any;

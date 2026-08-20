@@ -50,7 +50,7 @@ app.use(
 			if (!origin || allowedOrigins.includes(origin)) {
 				callback(null, true);
 			} else {
-				callback(null, true);
+				callback(new Error("Not allowed by CORS"));
 			}
 		},
 		credentials: true,
@@ -89,9 +89,14 @@ if (process.env.NODE_ENV === "production") {
 // Global error handler middleware (must be registered last)
 app.use(errorHandler);
 
-server.listen(PORT, () => {
-	console.log(`Server running on port ${PORT}`);
-	connectDB();
+// Connect to database before starting server
+connectDB().then(() => {
+	server.listen(PORT, () => {
+		console.log(`Server running on port ${PORT}`);
+	});
+}).catch((error) => {
+	console.error("Failed to start server:", error);
+	process.exit(1);
 });
 
 export default app;

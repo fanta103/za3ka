@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-export const createJobSchema = z.object({
+// Base schema without refinement for update operations
+const jobBaseSchema = z.object({
 	title: z.string().min(1, "Job title is required").max(200, "Job title is too long"),
 	company: z.string().min(1, "Company name is required").max(100, "Company name is too long"),
 	location: z.string().min(1, "Location is required").max(100, "Location is too long"),
@@ -12,7 +13,18 @@ export const createJobSchema = z.object({
 	status: z.enum(["open", "closed", "paused"]).optional().default("open"),
 });
 
-export const updateJobSchema = createJobSchema.partial();
+// Create schema with salary validation refinement
+export const createJobSchema = jobBaseSchema.refine((data) => {
+	if (data.salaryMin !== undefined && data.salaryMax !== undefined) {
+		return data.salaryMax >= data.salaryMin;
+	}
+	return true;
+}, {
+	message: "Maximum salary cannot be less than minimum salary",
+});
+
+// Update schema without refinement (partial of base)
+export const updateJobSchema = jobBaseSchema.partial();
 
 export const updateJobStatusSchema = z.object({
 	status: z.enum(["open", "closed", "paused"]),
@@ -29,7 +41,7 @@ export const jobQuerySchema = z.object({
 	search: z.string().optional(),
 	authorId: z.string().optional(),
 	cursor: z.string().optional(),
-	limit: z.string().optional(),
+	limit: z.coerce.number().min(1).max(100).optional(),
 });
 
 export type CreateJobInput = z.infer<typeof createJobSchema>;

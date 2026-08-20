@@ -335,9 +335,8 @@ export const deleteJob = async (req: AuthenticatedRequest, res: Response, next: 
 			throw ApiError.forbidden("Forbidden - Not author of this job");
 		}
 
-		job.deletedAt = new Date();
 		job.status = "closed";
-		await job.save();
+		await job.softDelete();
 
 		res.json({ success: true, message: "Job deleted successfully" });
 	} catch (error) {

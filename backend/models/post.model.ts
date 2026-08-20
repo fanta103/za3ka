@@ -31,6 +31,7 @@ const postSchema = new Schema<IPostDoc>(
 
 // Indexes
 postSchema.index({ author: 1, createdAt: -1 });
+postSchema.index({ author: 1, deletedAt: 1, createdAt: -1 });
 postSchema.index({ content: "text" });
 
 // Soft delete pre-query middleware

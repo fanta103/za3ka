@@ -1,4 +1,4 @@
-import mongoose, { Document, Model, Schema, Types } from "mongoose";
+import mongoose, { Document, Model, Schema, Types, CallbackError } from "mongoose";
 
 export type JobType = "full-time" | "part-time" | "contract" | "internship" | "remote";
 export type JobStatus = "open" | "closed" | "paused";
@@ -20,6 +20,7 @@ export interface IJobDoc extends Document {
 	deletedAt?: Date | null;
 	createdAt: Date;
 	updatedAt: Date;
+	softDelete(): Promise<IJobDoc>;
 }
 
 const jobSchema = new Schema<IJobDoc>(
@@ -92,6 +93,25 @@ jobSchema.index({ status: 1, createdAt: -1 });
 jobSchema.index({ location: 1, status: 1 });
 jobSchema.index({ deletedAt: 1, createdAt: -1 });
 jobSchema.index({ title: "text", company: "text", description: "text" });
+
+// Soft delete pre-query middleware
+const excludeSoftDeleted = function (this: any, next: (err?: CallbackError) => void) {
+	if (this.getFilter().deletedAt === undefined) {
+		this.where({ deletedAt: null });
+	}
+	next();
+};
+
+jobSchema.pre("find", excludeSoftDeleted);
+jobSchema.pre("findOne", excludeSoftDeleted);
+jobSchema.pre("countDocuments", excludeSoftDeleted);
+jobSchema.pre("findOneAndUpdate", excludeSoftDeleted);
+
+// Instance method for soft delete
+jobSchema.methods.softDelete = function (this: IJobDoc) {
+	this.deletedAt = new Date();
+	return this.save();
+};
 
 const Job: Model<IJobDoc> = mongoose.model<IJobDoc>("Job", jobSchema);
 

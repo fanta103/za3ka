@@ -11,7 +11,7 @@ import {
 	likePost,
 } from "../controllers/post.controller";
 import { validateRequest } from "../middleware/validate.middleware";
-import { createPostSchema, createCommentSchema, postIdParamSchema } from "../validations/post.validation";
+import { createPostSchema, createCommentSchema, postIdParamSchema, commentIdParamSchema } from "../validations/post.validation";
 import { upload } from "../lib/multer";
 
 const router = express.Router();
@@ -33,7 +33,7 @@ router.post(
 	validateRequest({ params: postIdParamSchema, body: createCommentSchema }),
 	createComment
 );
-router.delete("/comments/:commentId", protectRoute, deleteComment);
+router.delete("/comments/:commentId", protectRoute, validateRequest({ params: commentIdParamSchema }), deleteComment);
 router.post("/:id/like", protectRoute, validateRequest({ params: postIdParamSchema }), likePost);
 
 export default router;

@@ -1,7 +1,7 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
-import { IPost, PaginatedResult } from "../types";
+import { IComment, IPost, PaginatedResult } from "../types";
 
 export const useFeedPosts = () => {
 	return useInfiniteQuery<PaginatedResult<IPost>>({
@@ -17,27 +17,7 @@ export const useFeedPosts = () => {
 	});
 };
 
-export const usePostById = (postId: string) => {
-	const queryClient = useQueryClient();
-	return {
-		data: queryClient.getQueryData<IPost>(["post", postId]),
-		...useInfiniteQuery<PaginatedResult<IPost>>({
-			queryKey: ["post", postId],
-			queryFn: async () => {
-				const res = await axiosInstance.get(`/posts/${postId}`);
-				// getPostById returns a single post, not paginated
-				return { data: [res.data], nextCursor: null, hasMore: false };
-			},
-			initialPageParam: undefined,
-			getNextPageParam: () => undefined,
-			enabled: !!postId,
-		}),
-	};
-};
-
-// Simple non-paginated single post fetch
 export const usePost = (postId: string) => {
-	const { useQuery } = require("@tanstack/react-query");
 	return useQuery<IPost>({
 		queryKey: ["post", postId],
 		queryFn: async () => {
@@ -45,6 +25,21 @@ export const usePost = (postId: string) => {
 			return res.data;
 		},
 		enabled: !!postId,
+	});
+};
+
+export const usePostComments = (postId: string, enabled: boolean) => {
+	return useInfiniteQuery<PaginatedResult<IComment>>({
+		queryKey: ["post-comments", postId],
+		queryFn: async ({ pageParam }) => {
+			const params = new URLSearchParams({ limit: "30" });
+			if (pageParam) params.set("cursor", pageParam as string);
+			const res = await axiosInstance.get(`/posts/${postId}/comments?${params.toString()}`);
+			return res.data;
+		},
+		initialPageParam: undefined,
+		getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+		enabled: Boolean(postId) && enabled,
 	});
 };
 
@@ -116,6 +111,24 @@ export const useCreateComment = (postId: string) => {
 		},
 		onError: (err: any) => {
 			toast.error(err.response?.data?.message || "Failed to add comment");
+		},
+	});
+};
+
+export const useDeleteComment = (postId: string) => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (commentId: string) => {
+			const res = await axiosInstance.delete(`/posts/comments/${commentId}`);
+			return res.data;
+		},
+		onSuccess: () => {
+			toast.success("Comment deleted successfully");
+			queryClient.invalidateQueries({ queryKey: ["posts"] });
+			queryClient.invalidateQueries({ queryKey: ["post", postId] });
+		},
+		onError: (err: any) => {
+			toast.error(err.response?.data?.message || "Failed to delete comment");
 		},
 	});
 };

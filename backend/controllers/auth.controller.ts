@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import { Types } from "mongoose";
 import User, { IUser } from "../models/user.model";
 import {
 	sendWelcomeEmail,
@@ -94,12 +95,13 @@ export const signup = async (req: Request, res: Response, next: NextFunction): P
 		const verifyUrl = `${clientUrl}/verify-email/${rawVerifyToken}`;
 		const profileUrl = `${clientUrl}/profile/${user.username}`;
 
-		try {
-			await sendVerificationEmail(user.email, user.name, verifyUrl);
-			await sendWelcomeEmail(user.email, user.name, profileUrl);
-		} catch (emailError) {
-			console.error("Error sending emails on signup:", emailError);
-		}
+		// Send emails asynchronously (non-blocking)
+		sendVerificationEmail(user.email, user.name, verifyUrl).catch((emailError) => {
+			console.warn("Verification email sending failed (non-critical):", emailError);
+		});
+		sendWelcomeEmail(user.email, user.name, profileUrl).catch((emailError) => {
+			console.warn("Welcome email sending failed (non-critical):", emailError);
+		});
 
 		res.status(201).json({
 			success: true,
@@ -122,9 +124,10 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
 	try {
 		const { username, password } = req.body;
 
+		// Optimized lookup with lean() for faster query
 		const user = await User.findOne({
 			$or: [{ username }, { email: username }],
-		});
+		}).lean();
 
 		if (!user) {
 			throw ApiError.badRequest("Invalid credentials", "INVALID_CREDENTIALS");
@@ -135,19 +138,25 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
 			throw ApiError.badRequest("Invalid credentials", "INVALID_CREDENTIALS");
 		}
 
-		await generateAndSetAuthTokens(user, res);
+		// Get full user document for token generation
+		const fullUser = await User.findById(user._id);
+		if (!fullUser) {
+			throw ApiError.badRequest("Invalid credentials", "INVALID_CREDENTIALS");
+		}
+
+		await generateAndSetAuthTokens(fullUser, res);
 
 		res.json({
 			success: true,
 			message: "Logged in successfully",
 			user: {
-				_id: user._id,
-				name: user.name,
-				username: user.username,
-				email: user.email,
-				role: user.role,
-				isVerified: user.isVerified,
-				profilePicture: user.profilePicture,
+				_id: fullUser._id,
+				name: fullUser.name,
+				username: fullUser.username,
+				email: fullUser.email,
+				role: fullUser.role,
+				isVerified: fullUser.isVerified,
+				profilePicture: fullUser.profilePicture,
 			},
 		});
 	} catch (error) {
@@ -163,22 +172,31 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
 			throw ApiError.unauthorized("No refresh token provided", "NO_REFRESH_TOKEN");
 		}
 
-		// Find user with active refresh token
-		const users = await User.find({ refreshToken: { $exists: true, $ne: null } });
-		let matchedUser: IUser | null = null;
+		// Find user with active refresh token (optimized with index)
+		const users = await User.find({ refreshToken: { $exists: true, $ne: null } })
+			.select("_id")
+			.lean();
+		let matchedUserId: Types.ObjectId | null = null;
 
 		for (const u of users) {
-			if (u.refreshToken && (await bcrypt.compare(rawRefreshToken, u.refreshToken))) {
-				matchedUser = u;
+			const user = await User.findById(u._id).select("refreshToken");
+			if (user && user.refreshToken && (await bcrypt.compare(rawRefreshToken, user.refreshToken))) {
+				matchedUserId = user._id;
 				break;
 			}
 		}
 
-		if (!matchedUser) {
+		if (!matchedUserId) {
 			// Clear invalid cookies
 			res.clearCookie("jwt-linkedin");
 			res.clearCookie("jwt-linkedin-refresh", { path: "/api/v1/auth" });
 			throw ApiError.unauthorized("Invalid or expired refresh token", "INVALID_REFRESH_TOKEN");
+		}
+
+		// Fetch full user document for token generation
+		const matchedUser = await User.findById(matchedUserId);
+		if (!matchedUser) {
+			throw ApiError.notFound("User not found");
 		}
 
 		// Rotate token: generate new access & refresh tokens
@@ -197,11 +215,12 @@ export const logout = async (req: Request, res: Response, next: NextFunction): P
 	try {
 		const rawRefreshToken = req.cookies?.["jwt-linkedin-refresh"];
 		if (rawRefreshToken) {
-			const users = await User.find({ refreshToken: { $exists: true, $ne: null } });
+			const users = await User.find({ refreshToken: { $exists: true, $ne: null } })
+				.select("_id refreshToken")
+				.lean();
 			for (const u of users) {
 				if (u.refreshToken && (await bcrypt.compare(rawRefreshToken, u.refreshToken))) {
-					u.refreshToken = undefined;
-					await u.save();
+					await User.findByIdAndUpdate(u._id, { $unset: { refreshToken: "" } });
 					break;
 				}
 			}

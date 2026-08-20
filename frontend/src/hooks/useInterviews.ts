@@ -89,8 +89,13 @@ export const useSubmitFeedback = () => {
 
 export const useGenerateInterviewToken = () => {
 	return useMutation({
-		mutationFn: async (id: string): Promise<{ token: string; url: string }> => {
-			const res = await axiosInstance.post(`/interviews/${id}/token`);
+		mutationFn: async (
+			payload: string | { interviewId: string; participantId?: string }
+		): Promise<{ token: string; url: string }> => {
+			const interviewId = typeof payload === "string" ? payload : payload.interviewId;
+			if (!interviewId) throw new Error("Interview ID is required");
+
+			const res = await axiosInstance.post(`/interviews/${interviewId}/token`);
 			return res.data;
 		},
 		onError: (err: any) => {

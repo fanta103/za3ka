@@ -20,7 +20,7 @@ import {
 	interviewStatusConfig,
 } from "../utils/interviewUtils";
 
-type TabFilter = InterviewStatus | "upcoming";
+type TabFilter = Exclude<InterviewStatus, "scheduled"> | "upcoming";
 
 const TAB_OPTIONS: { id: TabFilter; label: string }[] = [
 	{ id: "upcoming", label: "Upcoming" },

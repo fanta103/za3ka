@@ -17,5 +17,9 @@ export const postIdParamSchema = z.object({
 	id: z.string().min(1, "Post ID is required"),
 });
 
+export const commentIdParamSchema = z.object({
+	commentId: z.string().min(1, "Comment ID is required"),
+});
+
 export type CreatePostInput = z.infer<typeof createPostSchema>;
 export type CreateCommentInput = z.infer<typeof createCommentSchema>;

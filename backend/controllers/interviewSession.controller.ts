@@ -1,6 +1,7 @@
 import { Response, NextFunction } from "express";
 import InterviewSession from "../models/interviewSession.model";
 import Job from "../models/job.model";
+import Application from "../models/application.model";
 import Notification from "../models/notification.model";
 import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import { ApiError } from "../lib/ApiError";
@@ -71,6 +72,16 @@ export const scheduleInterview = async (
 		// Ensure candidate is not the same as recruiter
 		if (candidateId === recruiterId.toString()) {
 			throw ApiError.badRequest("Cannot schedule interview with yourself");
+		}
+
+		// Verify candidate has applied to this job
+		const application = await Application.findOne({
+			jobId,
+			applicantId: candidateId,
+		});
+
+		if (!application) {
+			throw ApiError.badRequest("Cannot schedule interview - candidate has not applied to this job");
 		}
 
 		const liveKitRoomName = `interview-${jobId}-${candidateId}-${Date.now()}`;

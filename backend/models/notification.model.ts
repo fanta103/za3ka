@@ -14,6 +14,7 @@ export interface INotification extends Document {
 		| "interviewFeedback";
 	relatedUser?: Types.ObjectId | any;
 	relatedPost?: Types.ObjectId | any;
+	relatedJob?: Types.ObjectId | any;
 	relatedInterview?: Types.ObjectId | any;
 	read: boolean;
 	createdAt: Date;
@@ -50,6 +51,10 @@ const notificationSchema = new Schema<INotification>(
 			type: Schema.Types.ObjectId,
 			ref: "Post",
 		},
+		relatedJob: {
+			type: Schema.Types.ObjectId,
+			ref: "Job",
+		},
 		relatedInterview: {
 			type: Schema.Types.ObjectId,
 			ref: "InterviewSession",
@@ -64,8 +69,8 @@ const notificationSchema = new Schema<INotification>(
 
 // Compound index for querying a user's notifications sorted by date/read status
 notificationSchema.index({ recipient: 1, read: 1, createdAt: -1 });
+notificationSchema.index({ recipient: 1, createdAt: -1 });
 
 const Notification: Model<INotification> = mongoose.model<INotification>("Notification", notificationSchema);
 
 export default Notification;
-

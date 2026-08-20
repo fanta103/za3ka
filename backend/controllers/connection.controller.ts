@@ -80,35 +80,28 @@ export const acceptConnectionRequest = async (
 			throw ApiError.badRequest("This request has already been processed");
 		}
 
-		request.status = "accepted";
-		await request.save();
-
-		// Add each other to connections
-		await User.findByIdAndUpdate(request.sender._id, {
-			$addToSet: { connections: userId },
-		});
-		await User.findByIdAndUpdate(userId, {
-			$addToSet: { connections: request.sender._id },
-		});
-
 		const notification = new Notification({
 			recipient: request.sender._id,
 			type: "connectionAccepted",
 			relatedUser: userId,
 		});
 
-		await notification.save();
+		request.status = "accepted";
+		await Promise.all([
+			request.save(),
+			User.findByIdAndUpdate(request.sender._id, { $addToSet: { connections: userId } }),
+			User.findByIdAndUpdate(userId, { $addToSet: { connections: request.sender._id } }),
+			notification.save(),
+		]);
 
 		const senderEmail = request.sender.email;
 		const senderName = request.sender.name;
 		const recipientName = request.recipient.name;
 		const profileUrl = (process.env.CLIENT_URL || "http://localhost:5173") + "/profile/" + request.recipient.username;
 
-		try {
-			await sendConnectionAcceptedEmail(senderEmail, senderName, recipientName, profileUrl);
-		} catch (error) {
-			console.error("Error in sendConnectionAcceptedEmail:", error);
-		}
+		void sendConnectionAcceptedEmail(senderEmail, senderName, recipientName, profileUrl).catch((error) =>
+			console.error("Error in sendConnectionAcceptedEmail:", error)
+		);
 
 		res.json({ message: "Connection accepted successfully" });
 	} catch (error) {
@@ -244,8 +237,9 @@ export const getConnectionStatus = async (
 		const targetUserId = req.params.userId;
 		const currentUserId = req.user._id;
 
-		const currentUser = req.user;
-		if (currentUser.connections.some((id: any) => id.toString() === targetUserId)) {
+		// Check if already connected using database query to ensure populated data
+		const currentUser = await User.findById(currentUserId).select("connections");
+		if (currentUser && currentUser.connections.some((id: any) => id.toString() === targetUserId)) {
 			res.json({ status: "connected" });
 			return;
 		}

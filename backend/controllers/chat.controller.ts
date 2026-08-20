@@ -106,6 +106,9 @@ export const getOrCreateConversation = async (
 			throw ApiError.badRequest("Cannot create conversation with yourself");
 		}
 
+		// Note: Chat is allowed between non-connections (LinkedIn-like behavior)
+		// If connection requirement is needed, add validation here
+
 		let conversation = await Conversation.findOne({
 			participants: { $all: [myId, targetUserId], $size: 2 },
 		}).populate("participants", "name username profilePicture headline role location");

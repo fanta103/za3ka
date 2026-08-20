@@ -26,7 +26,9 @@ export const getUserNotifications = async (
 			.sort({ createdAt: -1 })
 			.limit(limit + 1)
 			.populate("relatedUser", "name username profilePicture")
-			.populate("relatedPost", "content image");
+			.populate("relatedPost", "content image")
+			.populate("relatedJob", "title company location")
+			.populate("relatedInterview", "status scheduledAt");
 
 		const result = formatPaginatedResult(notifications, limit);
 		res.status(200).json(result);
