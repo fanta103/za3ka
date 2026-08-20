@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
 import { IUser } from "../types";
+import { useNavigate } from "react-router-dom";
 
 export const useAuthUser = () => {
 	return useQuery<IUser>({
@@ -11,7 +12,7 @@ export const useAuthUser = () => {
 			return res.data;
 		},
 		retry: false,
-		staleTime: 5 * 60 * 1000, // 5 minutes
+		staleTime: 30 * 1000, // 30 seconds, // 5 minutes
 	});
 };
 
@@ -53,20 +54,22 @@ export const useSignUp = () => {
 	});
 };
 
+
 export const useLogout = () => {
-	const queryClient = useQueryClient();
-	return useMutation({
-		mutationFn: async () => {
-			const res = await axiosInstance.post("/auth/logout");
-			return res.data;
-		},
-		onSuccess: () => {
-			queryClient.clear();
-		},
-		onError: (err: any) => {
-			toast.error(err.response?.data?.message || "Logout failed");
-		},
-	});
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async () => {
+            const res = await axiosInstance.post("/auth/logout");
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.clear();
+            window.location.href = "/login";
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || "Logout failed");
+        },
+    });
 };
 
 export const useForgotPassword = () => {

@@ -7,9 +7,13 @@ import {
 	RoomAudioRenderer,
 	ControlBar,
 	useTracks,
+	useConnectionState,
+	useRoomContext,
+	DisconnectButton,
 } from "@livekit/components-react";
-import { Track } from "livekit-client";
+import { Track, ConnectionState } from "livekit-client";
 import { Loader2, PhoneOff, AlertCircle } from "lucide-react";
+import toast from "react-hot-toast";
 import { useAuthUser } from "../hooks/useAuth";
 import {
 	useGenerateInterviewToken,
@@ -32,8 +36,8 @@ const VideoConference: React.FC = () => {
 			<div className='flex-1 min-h-0 bg-neutral-900'>
 				<GridLayout tracks={tracks} className='h-full'>
 					<ParticipantTile />
-				</GridLayout>
-			</div>
+			</GridLayout>
+		</div>
 			<RoomAudioRenderer />
 			<div className='bg-neutral-950 border-t border-neutral-800 p-3'>
 				<ControlBar
@@ -63,6 +67,14 @@ const InterviewRoomPage: React.FC = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [isConnecting, setIsConnecting] = useState(true);
 	const hasMarkedInProgressRef = useRef(false);
+	const userIdRef = useRef(authUser?._id);
+	const isEndingCallRef = useRef(false);
+	const mountTimeRef = useRef(Date.now());
+
+	// Keep the userId ref stable — don't re-run effect on authUser object refetch
+	if (authUser?._id && userIdRef.current !== authUser._id) {
+		userIdRef.current = authUser._id;
+	}
 
 	const isRecruiter =
 		authUser?.role === "recruiter" ||
@@ -70,8 +82,11 @@ const InterviewRoomPage: React.FC = () => {
 		(interview &&
 			getInterviewParticipantId(interview.recruiterId) === authUser?._id);
 
+	// Only mark as completed when user EXPLICITLY clicks End Call
 	const handleEndCall = useCallback(async () => {
-		if (!id) return;
+		if (!id || isEndingCallRef.current) return;
+		isEndingCallRef.current = true;
+
 		try {
 			await updateStatus({ id, status: "completed" });
 		} catch {
@@ -86,7 +101,7 @@ const InterviewRoomPage: React.FC = () => {
 	}, [id, updateStatus, isRecruiter, navigate]);
 
 	useEffect(() => {
-		if (!id || !authUser) return;
+		if (!id || !userIdRef.current) return;
 
 		let cancelled = false;
 
@@ -121,7 +136,8 @@ const InterviewRoomPage: React.FC = () => {
 		return () => {
 			cancelled = true;
 		};
-	}, [id, authUser, generateToken, updateStatus]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [id]);
 
 	if (isLoadingInterview || isConnecting) {
 		return (
@@ -139,10 +155,10 @@ const InterviewRoomPage: React.FC = () => {
 				<h2 className='text-xl font-bold mb-2'>Unable to Join</h2>
 				<p className='text-sm text-neutral-400 text-center max-w-md mb-6'>
 					{error || "Could not obtain a room token. Check that LiveKit credentials are configured."}
-				</p>
+			</p>
 				<button onClick={() => navigate("/interviews")} className='btn btn-primary btn-sm'>
 					Back to Interviews
-				</button>
+			</button>
 			</div>
 		);
 	}
@@ -157,17 +173,14 @@ const InterviewRoomPage: React.FC = () => {
 				<div>
 					<h1 className='text-sm font-bold text-white'>{jobTitle}</h1>
 					<p className='text-xs text-neutral-400'>Live video interview</p>
-				</div>
-				<button
-					onClick={handleEndCall}
-					className='btn btn-sm btn-error gap-2'
-				>
+			</div>
+			<button onClick={handleEndCall} className='btn btn-sm btn-error gap-2'>
 					<PhoneOff size={16} />
 					End Call
-				</button>
+			</button>
 			</div>
 
-			{/* LiveKit Room */}
+			{/* LiveKit Room — NO onDisconnected prop, no auto-navigate */}
 			<div className='flex-1 min-h-0'>
 				<LiveKitRoom
 					video
@@ -175,7 +188,6 @@ const InterviewRoomPage: React.FC = () => {
 					token={token}
 					serverUrl={serverUrl}
 					connect
-					onDisconnected={handleEndCall}
 					className='h-full'
 					data-lk-theme='default'
 				>

@@ -36,11 +36,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ userData, onSave, isOwnPr
 	const { mutate: rejectRequest } = useRejectConnectionRequest();
 	const { mutate: removeConnection } = useRemoveConnection();
 
-	const computedConnectionStatus = useMemo(() => {
-		if (isConnected) return "connected";
-		if (!isConnected && !connectionStatus) return "not_connected";
-		return connectionStatus?.status;
-	}, [isConnected, connectionStatus]);
+const computedConnectionStatus = useMemo(() => {
+    if (connectionStatus?.status) return connectionStatus.status;
+    if (isConnected) return "connected";
+    return "not_connected";
+}, [isConnected, connectionStatus]);
 
 	const renderConnectionButton = () => {
 		const baseClass = "text-white py-2 px-4 rounded-full transition duration-300 flex items-center justify-center";

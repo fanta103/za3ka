@@ -35,26 +35,19 @@ export const useConversationMessages = (conversationId?: string) => {
 };
 
 export const useGetOrCreateConversation = () => {
-	const queryClient = useQueryClient();
-	return useMutation({
-		mutationFn: async (userId: string) => {
-			const res = await axiosInstance.post("/chat/conversations", { userId });
-			return res.data as IConversation;
-		},
-		onSuccess: (conversation) => {
-			queryClient.setQueryData<IConversation[]>(["conversations"], (old = []) => {
-				const exists = old.some((c) => c._id === conversation._id);
-				if (exists) {
-					return old.map((c) => (c._id === conversation._id ? conversation : c));
-				}
-				return [conversation, ...old];
-			});
-			queryClient.invalidateQueries({ queryKey: ["conversations"] });
-		},
-		onError: (err: any) => {
-			toast.error(err.response?.data?.message || "Failed to start conversation");
-		},
-	});
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (userId: string) => {
+            const res = await axiosInstance.post("/chat/conversations", { userId });
+            return res.data as IConversation;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || "Failed to start conversation");
+        },
+    });
 };
 
 export const useSendMessage = () => {

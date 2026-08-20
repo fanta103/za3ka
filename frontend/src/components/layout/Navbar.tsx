@@ -24,7 +24,7 @@ import { useConversations } from "../../hooks/useChat";
 import PostJobModal from "../jobs/PostJobModal";
 
 const Navbar: React.FC = () => {
-	const { data: authUser } = useAuthUser();
+const { data: authUser, isLoading: isAuthLoading } = useAuthUser();
 	const { data: unreadData } = useUnreadNotificationsCount();
 	const { data: connectionRequests } = useConnectionRequests();
 	const { data: conversations = [] } = useConversations();
@@ -181,128 +181,127 @@ const Navbar: React.FC = () => {
 
 						{/* Nav links */}
 						<div className='flex items-center gap-2 md:gap-5'>
-							{authUser ? (
-								<>
-									{/* Home */}
-									<Link to='/' className='text-neutral hover:text-primary transition-colors flex flex-col items-center'>
-										<Home size={19} />
-										<span className='text-[11px] hidden md:block'>Home</span>
-									</Link>
+							{isAuthLoading ? null : authUser ? (
+    <>
+        {/* Home */}
+        <Link to='/' className='text-neutral hover:text-primary transition-colors flex flex-col items-center'>
+            <Home size={19} />
+            <span className='text-[11px] hidden md:block'>Home</span>
+        </Link>
 
-									{/* Jobs Feed (Universal) */}
-									<Link to='/jobs' className='text-neutral hover:text-primary transition-colors flex flex-col items-center'>
-										<Briefcase size={19} />
-										<span className='text-[11px] hidden md:block'>Jobs</span>
-									</Link>
+        {/* Jobs Feed (Universal) */}
+        <Link to='/jobs' className='text-neutral hover:text-primary transition-colors flex flex-col items-center'>
+            <Briefcase size={19} />
+            <span className='text-[11px] hidden md:block'>Jobs</span>
+        </Link>
 
-									{/* Jobseeker: My Applications */}
-									{isJobseeker && (
-										<Link
-											to='/my-applications'
-											className='text-neutral hover:text-primary transition-colors flex flex-col items-center'
-										>
-											<FileText size={19} />
-											<span className='text-[11px] hidden md:block'>Applications</span>
-										</Link>
-									)}
+        {/* Jobseeker: My Applications */}
+        {isJobseeker && (
+            <Link
+                to='/my-applications'
+                className='text-neutral hover:text-primary transition-colors flex flex-col items-center'
+            >
+                <FileText size={19} />
+                <span className='text-[11px] hidden md:block'>Applications</span>
+            </Link>
+        )}
 
-									{/* Recruiter: My Jobs (Dashboard) */}
-									{isRecruiter && (
-										<Link
-											to='/my-jobs'
-											className='text-neutral hover:text-primary transition-colors flex flex-col items-center'
-										>
-											<CheckSquare size={19} />
-											<span className='text-[11px] hidden md:block'>My Jobs</span>
-										</Link>
-									)}
+        {/* Recruiter: My Jobs (Dashboard) */}
+        {isRecruiter && (
+            <Link
+                to='/my-jobs'
+                className='text-neutral hover:text-primary transition-colors flex flex-col items-center'
+            >
+                <CheckSquare size={19} />
+                <span className='text-[11px] hidden md:block'>My Jobs</span>
+            </Link>
+        )}
 
-									{/* Recruiter: Post a Job CTA */}
-									{isRecruiter && (
-										<button
-											onClick={() => setIsPostJobModalOpen(true)}
-											className='text-neutral hover:text-primary transition-colors flex flex-col items-center'
-											title='Post a Job'
-										>
-											<PlusCircle size={19} className='text-primary' />
-											<span className='text-[11px] hidden md:block font-medium text-primary'>
-												Post a Job
-											</span>
-										</button>
-									)}
+        {/* Recruiter: Post a Job CTA */}
+        {isRecruiter && (
+            <button
+                onClick={() => setIsPostJobModalOpen(true)}
+                className='text-neutral hover:text-primary transition-colors flex flex-col items-center'
+                title='Post a Job'
+            >
+                <PlusCircle size={19} className='text-primary' />
+                <span className='text-[11px] hidden md:block font-medium text-primary'>
+                    Post a Job
+                </span>
+            </button>
+        )}
 
-									{/* Network */}
-									<Link to='/network' className='text-neutral hover:text-primary transition-colors flex flex-col items-center relative'>
-										<Users size={19} />
-										<span className='text-[11px] hidden md:block'>Network</span>
-										{unreadConnectionRequestsCount > 0 && (
-											<span className='absolute -top-1 -right-1 md:right-3 bg-blue-500 text-white text-[10px] rounded-full size-3.5 flex items-center justify-center font-bold'>
-												{unreadConnectionRequestsCount}
-											</span>
-										)}
-									</Link>
+        {/* Network */}
+        <Link to='/network' className='text-neutral hover:text-primary transition-colors flex flex-col items-center relative'>
+            <Users size={19} />
+            <span className='text-[11px] hidden md:block'>Network</span>
+            {unreadConnectionRequestsCount > 0 && (
+                <span className='absolute -top-1 -right-1 md:right-3 bg-blue-500 text-white text-[10px] rounded-full size-3.5 flex items-center justify-center font-bold'>
+                    {unreadConnectionRequestsCount}
+                </span>
+            )}
+        </Link>
 
-									{/* Messaging (Chat) */}
-									<Link
-										to='/chat'
-										className='text-neutral hover:text-primary transition-colors flex flex-col items-center relative'
-									>
-										<MessageSquare size={19} />
-										<span className='text-[11px] hidden md:block'>Messaging</span>
-										{totalUnreadMessages > 0 && (
-											<span className='absolute -top-1 -right-1 md:right-4 bg-primary text-white text-[10px] rounded-full size-3.5 flex items-center justify-center font-bold'>
-												{totalUnreadMessages > 9 ? "9+" : totalUnreadMessages}
-											</span>
-										)}
-									</Link>
+        {/* Messaging (Chat) */}
+        <Link
+            to='/chat'
+            className='text-neutral hover:text-primary transition-colors flex flex-col items-center relative'
+        >
+            <MessageSquare size={19} />
+            <span className='text-[11px] hidden md:block'>Messaging</span>
+            {totalUnreadMessages > 0 && (
+                <span className='absolute -top-1 -right-1 md:right-4 bg-primary text-white text-[10px] rounded-full size-3.5 flex items-center justify-center font-bold'>
+                    {totalUnreadMessages > 9 ? "9+" : totalUnreadMessages}
+                </span>
+            )}
+        </Link>
 
-									{/* Video Interviews */}
-									<Link
-										to='/interviews'
-										className='text-neutral hover:text-primary transition-colors flex flex-col items-center'
-									>
-										<Video size={19} />
-										<span className='text-[11px] hidden md:block'>Interviews</span>
-									</Link>
+        {/* Video Interviews */}
+        <Link
+            to='/interviews'
+            className='text-neutral hover:text-primary transition-colors flex flex-col items-center'
+        >
+            <Video size={19} />
+            <span className='text-[11px] hidden md:block'>Interviews</span>
+        </Link>
 
-									{/* Notifications */}
-									<Link to='/notifications' className='text-neutral hover:text-primary transition-colors flex flex-col items-center relative'>
-										<Bell size={19} />
-										<span className='text-[11px] hidden md:block'>Notifications</span>
-										{unreadNotificationCount > 0 && (
-											<span className='absolute -top-1 -right-1 md:right-5 bg-blue-500 text-white text-[10px] rounded-full size-3.5 flex items-center justify-center font-bold'>
-												{unreadNotificationCount}
-											</span>
-										)}
-									</Link>
+        {/* Notifications */}
+        <Link to='/notifications' className='text-neutral hover:text-primary transition-colors flex flex-col items-center relative'>
+            <Bell size={19} />
+            <span className='text-[11px] hidden md:block'>Notifications</span>
+            {unreadNotificationCount > 0 && (
+                <span className='absolute -top-1 -right-1 md:right-5 bg-blue-500 text-white text-[10px] rounded-full size-3.5 flex items-center justify-center font-bold'>
+                    {unreadNotificationCount}
+                </span>
+            )}
+        </Link>
 
+        {/* Profile */}
+        <Link to={`/profile/${authUser.username}`} className='text-neutral hover:text-primary transition-colors flex flex-col items-center'>
+            <User size={19} />
+            <span className='text-[11px] hidden md:block'>Me</span>
+        </Link>
 
-									{/* Profile */}
-									<Link to={`/profile/${authUser.username}`} className='text-neutral hover:text-primary transition-colors flex flex-col items-center'>
-										<User size={19} />
-										<span className='text-[11px] hidden md:block'>Me</span>
-									</Link>
-
-									{/* Logout */}
-									<button
-										className='flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-800 ml-1'
-										onClick={() => logout()}
-										title='Logout'
-									>
-										<LogOut size={19} />
-										<span className='hidden md:inline text-xs'>Logout</span>
-									</button>
-								</>
-							) : (
-								<>
-									<Link to='/login' className='btn btn-ghost btn-sm'>
-										Sign In
-									</Link>
-									<Link to='/signup' className='btn btn-primary btn-sm'>
-										Join now
-									</Link>
-								</>
-							)}
+        {/* Logout */}
+        <button
+            className='flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-800 ml-1'
+            onClick={() => logout()}
+            title='Logout'
+        >
+            <LogOut size={19} />
+            <span className='hidden md:inline text-xs'>Logout</span>
+        </button>
+    </>
+) : (
+    <>
+        <Link to='/login' className='btn btn-ghost btn-sm'>
+            Sign In
+        </Link>
+        <Link to='/signup' className='btn btn-primary btn-sm'>
+            Join now
+        </Link>
+    </>
+)}
 						</div>
 					</div>
 				</div>

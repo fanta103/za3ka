@@ -24,74 +24,68 @@ import { SocketContextProvider } from "./context/SocketContext";
 const InterviewRoomPage = lazy(() => import("./pages/InterviewRoomPage"));
 
 const PageLoader = () => (
-	<div className='flex items-center justify-center min-h-[50vh]'>
-		<span className='loading loading-spinner loading-lg text-primary' />
-	</div>
+    <div className='flex items-center justify-center min-h-[50vh]'>
+        <span className='loading loading-spinner loading-lg text-primary' />
+    </div>
 );
 
 function App() {
-	const { data: authUser, isLoading } = useAuthUser();
+    const { data: authUser, isLoading } = useAuthUser();
 
-	if (isLoading) return null;
+    return (
+        <SocketContextProvider>
+            <Routes>
+                <Route
+                    path='/interviews/:id/room'
+                    element={
+                        authUser ? (
+                            <Suspense fallback={<PageLoader />}>
+                                <InterviewRoomPage />
+                            </Suspense>
+                        ) : (
+                            <Navigate to='/login' />
+                        )
+                    }
+                />
 
-	return (
-		<SocketContextProvider>
-			<Routes>
-				{/* Full-screen video room — outside Layout */}
-				<Route
-					path='/interviews/:id/room'
-					element={
-						authUser ? (
-							<Suspense fallback={<PageLoader />}>
-								<InterviewRoomPage />
-							</Suspense>
-						) : (
-							<Navigate to='/login' />
-						)
-					}
-				/>
-
-				{/* All other routes inside Layout */}
-				<Route
-					path='*'
-					element={
-						<Layout>
-							<Routes>
-								<Route path='/' element={authUser ? <HomePage /> : <Navigate to={"/login"} />} />
-								<Route path='/signup' element={!authUser ? <SignUpPage /> : <Navigate to={"/"} />} />
-								<Route path='/login' element={!authUser ? <LoginPage /> : <Navigate to={"/"} />} />
-								<Route path='/forgot-password' element={!authUser ? <ForgotPasswordPage /> : <Navigate to={"/"} />} />
-								<Route path='/reset-password/:token' element={!authUser ? <ResetPasswordPage /> : <Navigate to={"/"} />} />
-								<Route
-									path='/notifications'
-									element={authUser ? <NotificationsPage /> : <Navigate to={"/login"} />}
-								/>
-								<Route path='/network' element={authUser ? <NetworkPage /> : <Navigate to={"/login"} />} />
-								<Route path='/jobs' element={authUser ? <JobsPage /> : <Navigate to={"/login"} />} />
-								<Route path='/jobs/:id' element={authUser ? <JobDetailPage /> : <Navigate to={"/login"} />} />
-								<Route path='/my-jobs' element={authUser ? <MyJobsPage /> : <Navigate to={"/login"} />} />
-								<Route
-									path='/my-applications'
-									element={authUser ? <MyApplicationsPage /> : <Navigate to={"/login"} />}
-								/>
-								<Route path='/chat' element={authUser ? <ChatPage /> : <Navigate to={"/login"} />} />
-								<Route path='/interviews' element={authUser ? <InterviewsPage /> : <Navigate to={"/login"} />} />
-								<Route path='/post/:postId' element={authUser ? <PostPage /> : <Navigate to={"/login"} />} />
-								<Route
-									path='/profile/:username'
-									element={authUser ? <ProfilePage /> : <Navigate to={"/login"} />}
-								/>
-								<Route path='/search' element={authUser ? <SearchPage /> : <Navigate to={"/login"} />} />
-							</Routes>
-							<Toaster />
-						</Layout>
-					}
-				/>
-			</Routes>
-		</SocketContextProvider>
-	);
+                <Route
+                    path='*'
+                    element={
+                        <Layout>
+                            {isLoading ? (
+                                <div className='flex items-center justify-center min-h-[60vh]'>
+                                    <span className='loading loading-spinner loading-lg text-primary' />
+                                </div>
+                            ) : (
+                                <>
+                                    <Routes>
+                                        <Route path='/' element={authUser ? <HomePage /> : <Navigate to='/login' />} />
+                                        <Route path='/signup' element={!authUser ? <SignUpPage /> : <Navigate to='/' />} />
+                                        <Route path='/login' element={!authUser ? <LoginPage /> : <Navigate to='/' />} />
+                                        <Route path='/forgot-password' element={!authUser ? <ForgotPasswordPage /> : <Navigate to='/' />} />
+                                        <Route path='/reset-password/:token' element={!authUser ? <ResetPasswordPage /> : <Navigate to='/' />} />
+                                        <Route path='/notifications' element={authUser ? <NotificationsPage /> : <Navigate to='/login' />} />
+                                        <Route path='/network' element={authUser ? <NetworkPage /> : <Navigate to='/login' />} />
+                                        <Route path='/jobs' element={authUser ? <JobsPage /> : <Navigate to='/login' />} />
+                                        <Route path='/jobs/:id' element={authUser ? <JobDetailPage /> : <Navigate to='/login' />} />
+                                        <Route path='/my-jobs' element={authUser ? <MyJobsPage /> : <Navigate to='/login' />} />
+                                        <Route path='/my-applications' element={authUser ? <MyApplicationsPage /> : <Navigate to='/login' />} />
+                                        <Route path='/chat' element={authUser ? <ChatPage /> : <Navigate to='/login' />} />
+                                        <Route path='/interviews' element={authUser ? <InterviewsPage /> : <Navigate to='/login' />} />
+                                        <Route path='/post/:postId' element={authUser ? <PostPage /> : <Navigate to='/login' />} />
+                                        <Route path='/profile/:username' element={authUser ? <ProfilePage /> : <Navigate to='/login' />} />
+                                        <Route path='/search' element={authUser ? <SearchPage /> : <Navigate to='/login' />} />
+                                    </Routes>
+                                    <Toaster />
+                                </>
+                            )}
+                        </Layout>
+                    }
+                />
+            </Routes>
+        </SocketContextProvider>
+    );
 }
 
+
 export default App;
-
-
