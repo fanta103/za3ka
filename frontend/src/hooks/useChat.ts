@@ -10,9 +10,17 @@ export const useConversations = () => {
 		queryKey: ["conversations"],
 		queryFn: async () => {
 			const res = await axiosInstance.get("/chat/conversations");
-			return res.data;
+			const data = res.data as IConversation[];
+			// Dedupe by other participant ID
+			const seen = new Set<string>();
+			return data.filter((conv) => {
+				const otherId = conv.otherParticipant?._id;
+				if (!otherId || seen.has(otherId)) return false;
+				seen.add(otherId);
+				return true;
+			});
 		},
-		refetchInterval: 30000, // Background refresh every 30s as fallback
+		refetchInterval: 30000,
 	});
 };
 
@@ -35,19 +43,19 @@ export const useConversationMessages = (conversationId?: string) => {
 };
 
 export const useGetOrCreateConversation = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (userId: string) => {
-            const res = await axiosInstance.post("/chat/conversations", { userId });
-            return res.data as IConversation;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["conversations"] });
-        },
-        onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to start conversation");
-        },
-    });
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (userId: string) => {
+			const res = await axiosInstance.post("/chat/conversations", { userId });
+			return res.data as IConversation;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["conversations"] });
+		},
+		onError: (err: any) => {
+			toast.error(err.response?.data?.message || "Failed to start conversation");
+		},
+	});
 };
 
 export const useSendMessage = () => {
